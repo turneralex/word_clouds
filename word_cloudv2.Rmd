@@ -1,0 +1,73 @@
+---
+title: "Word Clouds - Fake News"
+author: "Alexander Turner"
+output: html_document
+---
+
+## Required Packages
+
+```{r warning=FALSE, message=FALSE}
+library(readr)
+library(dplyr)
+library(magrittr)
+library(wordcloud2)
+```
+
+## Word Cloud Package
+
+This project uses the __[`wordcloud2`](https://cran.r-project.org/web/packages/wordcloud2/vignettes/wordcloud.html)__ R package for generating word clouds
+
+## Data 
+
+The word cloud was based on a [fake news](https://en.wikipedia.org/wiki/Fake_news) text dataset. Find more info [here](https://www.kaggle.com/mrisdal/fake-news/home). This dataset was chosen as fake news plagued the 2016 USA election so much so that it was [suggested that it might have influenced the result](http://www.abc.net.au/news/2016-11-14/fake-news-would-have-influenced-us-election-experts-say/8024660). A word cloud quickly allows us to see which words were used most in fake news posts (the results are not surprising), providing insight into the topic.
+
+To be clear, the dataset contains a number of different fields and this analysis focuses on the post titles. For example, one post is titled:
+
+> "Assange - Hillary will win and tried to hack WikiLeaks"
+
+## Word Cloud
+
+Make sure to hover your mouse over each word to see the exact count with `wordcloud2`
+
+```{r warning=FALSE, message=FALSE, fig.align='center'}
+# read csv file
+news_data <- read_csv("C:/RStudio Projects/Personal Projects/Word Cloud/fake.csv") %>% 
+  filter(title != "")
+
+# remove all non-letter characters, convert to lower case & split sentences
+news_titles <- news_data$title %>% 
+  gsub("[^A-Za-z ]", "", .) %>% 
+  tolower() %>% 
+  strsplit(" ") %>% 
+  unlist()
+  
+# calculate word frequencies & put in table
+news_words <- news_titles %>% table()
+
+# create data frame for word frequencies table & remove 1st row which is blank  
+news_words <- data_frame(
+  word = news_words %>% names(),
+  freq = news_words %>% as.integer()
+) %>% 
+  slice(-1)
+
+# filter out some very common uninteresting words & all words with a frequency of less than 50
+news_words %>% 
+  filter(
+    freq >= 50
+    & word != "the"
+    & word != "to"
+    & word != "and"
+    & word != "a"
+    & word != "of"
+    & word != "is"
+    & word != "in"
+    & word != "on"
+    & word != "are"
+    & word != "from"
+    & word != "at"
+    & word != "as"
+    & word != "for"
+  ) %>% 
+  wordcloud2(color = "black", fontFamily = "Consolas") # create word cloud
+```

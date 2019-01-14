@@ -1,0 +1,102 @@
+---
+title: "Word Clouds - Opioids"
+author: "Alexander Turner"
+output: html_document
+---
+
+## Required Packages
+
+```{r warning=FALSE, message=FALSE}
+library(readr)
+library(dplyr)
+library(magrittr)
+library(wordcloud2)
+library(wordcloud)
+```
+
+## Word Cloud Packages
+
+This project uses 2 R packages for word clouds:
+
+* __[`wordcloud`](https://cran.r-project.org/web/packages/wordcloud/wordcloud.pdf)__
+* __[`wordcloud2`](https://cran.r-project.org/web/packages/wordcloud2/vignettes/wordcloud.html)__
+
+## Data 
+
+The word clouds were based on a dataset containing [Reddit](https://www.reddit.com/) text from posts / comments about [opioids](https://www.drugabuse.gov/drugs-abuse/opioids). Find more info [here](https://www.kaggle.com/amalinow/18000-reddit-comments-about-opioids/home). This dataset was chosen as opioid abuse has become an [epidemic](https://www.hhs.gov/opioids/about-the-epidemic/index.html) in the USA and a word cloud of social media comments helps us understand the issue. 
+
+To be clear, the dataset contains a number of different fields and this analysis focuses on the post titles. For example, one post is titled:
+
+> "What is the best pain killer?"
+
+A comment would then mention "opioid" for it to become part of the dataset. Some of titles mention "opioid" themselves. 
+
+## Word Cloud using `wordcloud2`
+
+Make sure to hover your mouse over each word to see the exact count with `wordcloud2`
+
+```{r warning=FALSE, message=FALSE, fig.align='center'}
+# read plain text file 
+opioids_data <- read_delim("C:/RStudio Projects/Personal Projects/Word Cloud/reddit_opioids.txt",
+                           delim = "|",
+                           col_names = T)
+
+# remove all non-letter characters, convert to lower case & split sentences
+opioid_titles <- opioids_data$Title %>% 
+  gsub("[^A-Za-z ]", "", .) %>% 
+  tolower() %>% 
+  strsplit(" ") %>% 
+  unlist()
+
+# calculate word frequencies & put in table
+opioid_words <- opioid_titles %>% table()
+
+# create data frame for word frequencies table & remove 1st row which is blank 
+opioid_words <- data_frame(
+  word = opioid_words %>% names(),
+  freq = opioid_words %>% as.integer()
+) %>% 
+  slice(-1)
+
+# filter out some very common uninteresting words & all words with a frequency of less than 5
+opioid_words %>% 
+  filter(
+    freq >= 5
+    & word != "the"
+    & word != "to"
+    & word != "and"
+    & word != "a"
+    & word != "of"
+    & word != "is"
+    & word != "in"
+    & word != "on"
+  ) %>% 
+  wordcloud2(color = "red", fontFamily = "Consolas") # create word cloud
+```
+
+## Word Cloud using `wordcloud`
+
+```{r warning=FALSE, message=FALSE, fig.align='center'}
+# create data frame for second word cloud
+opioid_words_filtered <- opioid_words %>% 
+  filter(
+    word != "the"
+    & word != "to"
+    & word != "and"
+    & word != "a"
+    & word != "of"
+    & word != "is"
+    & word != "in"
+    & word != "on"
+  )
+
+# second word cloud
+wordcloud(
+  words = opioid_words_filtered$word,
+  freq = opioid_words_filtered$freq,
+  random.order = F,
+  rot.per = 0.3,
+  max.words = 275,
+  colors = brewer.pal(5, "Set1")
+  )
+```
